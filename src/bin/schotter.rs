@@ -93,7 +93,7 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn update(app: &App, model: &mut Model, event: Update) {
+fn update(_app: &App, model: &mut Model, _event: Update) {
     let mut rng = StdRng::seed_from_u64(model.seed);
 
     for stone in model.gravel.iter_mut() {
@@ -158,10 +158,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
             .rotate(stone.rotation);
     }
 
-    draw.to_frame(&app, &frame).unwrap();
+    draw.to_frame(app, &frame).unwrap();
 }
 
-fn ui_event(app: &App, model: &mut Model, event: WindowEvent) {
+fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
     let mut ui = model.ui.set_widgets();
 
     for _click in widget::Button::new()
