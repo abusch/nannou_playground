@@ -75,6 +75,10 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
     match key {
         Key::R => {
             model.frame_count = 0;
+            model.ifs.a = random_range(-PI, PI);
+            model.ifs.b = random_range(-PI, PI);
+            model.ifs.c = random_range(-PI, PI);
+            model.ifs.d = random_range(-PI, PI);
             model.ifs.pts = generate_random_points(1000);
         }
         Key::A => {
