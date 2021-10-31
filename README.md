@@ -13,6 +13,7 @@ I'm taking inspiration from (i.e. ripping off...) various sources:
 
 ## Some screenshots
 
+![dejongifs](/assets/dejongifs.png)
 ![flowfield2](/assets/flowfield2.png)
 ![blacklines](/assets/blacklines.png)
 ![circles](/assets/circles.png)
