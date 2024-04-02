@@ -33,7 +33,9 @@ fn update(_app: &App, _model: &mut Model, _update: Update) {}
 fn key_pressed(app: &App, model: &mut Model, key: Key) {
     match key {
         Key::A => model.animate = !model.animate,
-        Key::S => app.main_window().capture_frame(format!("{}.png", app.exe_name().unwrap())),
+        Key::S => app
+            .main_window()
+            .capture_frame(format!("{}.png", app.exe_name().unwrap())),
         _ => (),
     }
 }
@@ -43,11 +45,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     let boundary = app.window_rect().pad(100.0);
     draw.background().color(BLACK);
 
-    let time = if model.animate {
-        app.time
-    } else {
-        0.0
-    };
+    let time = if model.animate { app.time } else { 0.0 };
     let sine = time.sin();
     let slow_sine = (time / 2.0).sin();
     let theta = (time / 3.0).sin() * PI * 2.0;
@@ -61,7 +59,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
             let posy = y / 100.0 + slow_sine;
 
             // rotate
-            let r = vec2(posx, posy).rotate(theta as f32).as_f64();
+            let r = vec2(posx, posy).rotate(theta).as_f64();
 
             // get the height from some Perlin noise
             let mut height = model.perlin.get([r.x, r.y]) as f32;

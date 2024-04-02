@@ -34,7 +34,7 @@ fn model(app: &App) -> Model {
         let px = x as f64 * 0.005;
         let py = y as f64 * 0.005;
         // Generate a random angle from 0 to 2*PI
-        *a = TAU * perlin.get([px as f64, py as f64]) as f32;
+        *a = TAU * perlin.get([px, py]) as f32;
     });
     Model {
         field,

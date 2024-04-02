@@ -1,6 +1,10 @@
 use std::f32::consts::FRAC_PI_4;
 
-use nannou::{Ui, prelude::*, rand::{prelude::StdRng, Rng, SeedableRng}, ui::{Labelable, Positionable, Sizeable, Widget, color::{self, DARK_CHARCOAL}, widget, widget_ids}};
+use nannou::{
+    prelude::*,
+    rand::{prelude::StdRng, Rng, SeedableRng},
+};
+use nannou_egui::{self, egui, Egui};
 
 const ROWS: u32 = 22;
 const COLS: u32 = 12;
@@ -11,8 +15,7 @@ const HEIGHT: u32 = ROWS * SIZE + 2 * MARGIN;
 const LINE_WIDTH: f32 = 0.06;
 
 struct Model {
-    ui: Ui,
-    ids: Ids,
+    ui: Egui,
     seed: u64,
     disp_adj: f32,
     rot_adj: f32,
@@ -43,38 +46,19 @@ fn main() {
     nannou::app(model).update(update).run();
 }
 
-widget_ids! {
-    struct Ids {
-        randomize,
-    }
-}
 fn model(app: &App) -> Model {
     app.set_loop_mode(LoopMode::Wait);
-    let _window = app
+    let window_id = app
         .new_window()
         .title(app.exe_name().unwrap())
         .view(view)
-        .key_pressed(key_pressed)
+        .raw_event(raw_window_event)
         .size(WIDTH, HEIGHT)
         .build()
         .unwrap();
 
-    let ui_window = app
-        .new_window()
-        .title(app.exe_name().unwrap() + " controls")
-        .size(300, 200)
-        .view(ui_view)
-        .event(ui_event)
-        .key_pressed(key_pressed)
-        .build()
-        .unwrap();
-    let mut ui = app.new_ui().window(ui_window).build().unwrap();
-    let ids = Ids::new(ui.widget_id_generator());
-
-    ui.clear_with(DARK_CHARCOAL);
-    let mut theme = ui.theme_mut();
-    theme.label_color = color::WHITE;
-    theme.shape_color = color::CHARCOAL;
+    let window = app.window(window_id).unwrap();
+    let egui = Egui::from_window(&window);
 
     let mut stones = vec![];
     for y in 0..ROWS {
@@ -84,8 +68,7 @@ fn model(app: &App) -> Model {
     }
 
     Model {
-        ui,
-        ids,
+        ui: egui,
         seed: 0,
         disp_adj: 1.0,
         rot_adj: 1.0,
@@ -93,13 +76,25 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn update(_app: &App, model: &mut Model, _event: Update) {
-    let mut rng = StdRng::seed_from_u64(model.seed);
+fn update(_app: &App, model: &mut Model, update: Update) {
+    // UI
+    model.ui.set_elapsed_time(update.since_start);
+    let ctx = model.ui.begin_frame();
+    egui::Window::new("Settings").show(&ctx, |ui| {
+        ui.vertical_centered(|ui| {
+            ui.add(egui::Slider::new(&mut model.disp_adj, 0.0..=5.0).text("Displacement"));
+            ui.add(egui::Slider::new(&mut model.rot_adj, 0.0..=5.0).text("Rotation"));
+            if ui.button("Randomize").clicked() {
+                model.seed = random_range(0, 1000000);
+            }
+        })
+    });
 
+    let mut rng = StdRng::seed_from_u64(model.seed);
     for stone in model.gravel.iter_mut() {
         // factor that goes from 0 to 1 as we go down the y direction. We use that to increase
         // the amount of randomness as we go down.
-        let factor = stone.y as f32 / ROWS as f32;
+        let factor = stone.y / ROWS as f32;
         let x_offset = model.disp_adj * factor * rng.gen_range(-0.5..0.5);
         let y_offset = model.disp_adj * factor * rng.gen_range(-0.5..0.5);
         let rotation = model.rot_adj * factor * rng.gen_range(-FRAC_PI_4..FRAC_PI_4);
@@ -109,29 +104,8 @@ fn update(_app: &App, model: &mut Model, _event: Update) {
     }
 }
 
-fn key_pressed(_app: &App, model: &mut Model, key: Key) {
-    match key {
-        Key::R => {
-            model.seed = random();
-        }
-        Key::Up => {
-            model.disp_adj += 0.1;
-        }
-        Key::Down => {
-            if model.disp_adj > 0.0 {
-                model.disp_adj -= 0.1;
-            }
-        }
-        Key::Right => {
-            model.rot_adj += 0.1;
-        }
-        Key::Left => {
-            if model.rot_adj > 0.0 {
-                model.rot_adj -= 0.1;
-            }
-        }
-        _ => {}
-    }
+fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event::WindowEvent) {
+    model.ui.handle_raw_event(event);
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
@@ -151,29 +125,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
             .stroke(BLACK)
             .stroke_weight(LINE_WIDTH)
             .w_h(1.0, 1.0)
-            .x_y(
-                stone.x as f32 + stone.x_offset,
-                stone.y as f32 + stone.y_offset,
-            )
+            .x_y(stone.x + stone.x_offset, stone.y + stone.y_offset)
             .rotate(stone.rotation);
     }
 
     draw.to_frame(app, &frame).unwrap();
-}
-
-fn ui_event(_app: &App, model: &mut Model, _event: WindowEvent) {
-    let mut ui = model.ui.set_widgets();
-
-    for _click in widget::Button::new()
-        .middle()
-        .w_h(125.0, 40.0)
-        .label("Randomize")
-        .set(model.ids.randomize, &mut ui)
-    {
-        model.seed = random_range(0, 1000000);
-    }
-}
-
-fn ui_view(app: &App, model: &Model, frame: Frame) {
-    model.ui.draw_to_frame_if_changed(app, &frame).unwrap();
+    model.ui.draw_to_frame(&frame).unwrap();
 }

@@ -130,7 +130,7 @@ impl Model {
                 })
                 .reduce(f32::min)
                 .unwrap();
-            let mut c = &mut self.circles[i];
+            let c = &mut self.circles[i];
             c.r += d;
         }
     }
@@ -162,7 +162,8 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
             model.grow();
         }
         Key::S => {
-            app.main_window().capture_frame(format!("{}.png", app.exe_name().unwrap()));
+            app.main_window()
+                .capture_frame(format!("{}.png", app.exe_name().unwrap()));
         }
         _ => (),
     }
